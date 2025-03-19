@@ -3,10 +3,10 @@ name: SBOM/SCA Scout
 on:
   workflow_dispatch:
     inputs:
-        docker_image:
-          description: 'The Docker image to scan'
-          required: true
-          default: 'pavlosmanikas/thebestimage:latest'
+      docker_image:
+        description: 'The Docker image to scan'
+        required: true
+        default: 'pavlosmanikas/thebestimage:latest'
 
 jobs:
   scout:
@@ -26,7 +26,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Pull the github input image or use the default
       - name: Pull the image
         run: docker pull ${{ github.event.inputs.docker_image }}
 
@@ -35,33 +34,34 @@ jobs:
         with:
           command: cves,recommendations,compare,sbom
           image: ${{ github.event.inputs.docker_image }}
-          #only-severities: critical,high # only show critical and high CVEs
-          #only-fixed: true # filter to fixed CVEs
-          exit-code: false  # fail or not based on CVEs found?
+          exit-code: false
           sarif-file: sca_scout.sarif
           output: sbom_scout.spdx.json
           format: spdx
+          only-severities: critical,high
+          only-fixed: true
 
-      - name: Compress SARIF file into a .zip archive
-        run: zip sca_scout.sarif.zip sca_scout.sarif  # Compress the SARIF file into a .zip archive
+      - name: Compress SBOM and SARIF Files
+        run: |
+          zip sbom_scout.zip sbom_scout.spdx.json
+          zip sca_scout.zip sca_scout.sarif
 
       - name: Upload SBOM file as an artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sbom_scout.spdx.json
-          path: sbom_scout.spdx.json
+          name: sbom_scout.zip
+          path: sbom_scout.zip
 
-      - name: Upload compressed SARIF file as an artifact
+      - name: Upload SARIF file as an artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sca_scout.sarif.zip  # Upload the .zip file
-          path: sca_scout.sarif.zip  # Path to the .zip file
+          name: sca_scout.zip
+          path: sca_scout.zip
 
-      # Only available on Github Enterprise or public repositories
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: sca_scout.sarif.zip  # Reference the compressed .zip SARIF file
+          sarif_file: sca_scout.sarif
           category: Security/SCA
 
       - name: SBOM upload
