@@ -42,8 +42,8 @@ jobs:
           output: sbom_scout.spdx.json
           format: spdx
 
-      - name: Compress SARIF file
-        run: gzip -k sca_scout.sarif  # Compress the SARIF file but keep the original
+      - name: Compress SARIF file into a .zip archive
+        run: zip sca_scout.sarif.zip sca_scout.sarif  # Compress the SARIF file into a .zip archive
 
       - name: Upload SBOM file as an artifact
         uses: actions/upload-artifact@v4
@@ -54,14 +54,14 @@ jobs:
       - name: Upload compressed SARIF file as an artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sca_scout.sarif.gz
-          path: sca_scout.sarif.gz  # Upload the compressed SARIF file
+          name: sca_scout.sarif.zip  # Upload the .zip file
+          path: sca_scout.sarif.zip  # Path to the .zip file
 
       # Only available on Github Enterprise or public repositories
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: sca_scout.sarif.gz  # Reference the compressed SARIF file
+          sarif_file: sca_scout.sarif.zip  # Reference the compressed .zip SARIF file
           category: Security/SCA
 
       - name: SBOM upload
